@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 
 from . import tools
 from .client import TimeTrackerClient
@@ -24,10 +24,10 @@ READ_TOOL_NAMES = {
 }
 
 
-def build_server(settings: Settings, client: TimeTrackerClient | None = None) -> FastMCP:
+def build_server(settings: Settings, client: TimeTrackerClient | None = None) -> MCPServer:
     """Create the MCP server with the read tools registered."""
     client = client or TimeTrackerClient(settings)
-    mcp = FastMCP("drytrix-timetracker-mcp")
+    mcp = MCPServer("drytrix-timetracker-mcp")
 
     @mcp.tool()
     def api_info() -> dict:
