@@ -18,10 +18,14 @@ It is configured entirely through environment variables; nothing is baked in.
 
 ### Recommended token scopes
 
-`read:time_entries`, `read:projects`, `read:reports`, `read:users`,
-`read:clients`, `read:tasks`. Add `write:time_entries` only if you enable the
-write tools. Missing scopes degrade gracefully — a tool that lacks its scope
-returns a clear `403` naming the scope.
+`read:time_entries`, `read:projects`, `read:reports`, `read:clients`,
+`read:tasks` — or simply **`read:*`** to grant all read access in one checkbox.
+
+`whoami` and per-user scoping need `read:users`. On instances that do not list
+that scope, **`read:*` covers it** — the app treats `read:*` as matching any
+`read:<resource>`. Add `write:time_entries` only if you enable the write tools.
+Missing scopes degrade gracefully: a tool that lacks its scope returns a clear
+`403` naming the scope.
 
 ## Install & run
 

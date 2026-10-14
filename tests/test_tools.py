@@ -61,6 +61,17 @@ def test_current_user_id_returns_none_without_read_users():
     assert tools.current_user_id(Denied()) is None
 
 
+def test_current_user_id_handles_enveloped_response():
+    # The real /users/me response nests the user under "user" (seen on v5.13.4).
+    fc = FakeClient({"users/me": {"user": {"id": 2, "username": "user1"}}})
+    assert tools.current_user_id(fc) == 2
+
+
+def test_current_user_id_handles_flat_response():
+    fc = FakeClient({"users/me": {"id": 7}})
+    assert tools.current_user_id(fc) == 7
+
+
 def test_hours_by_day_pins_to_token_user():
     fc = FakeClient({"users/me": {"id": 2}, "time-entries": []})
     tools.hours_by_day(fc, "2026-09-01", "2026-09-30")

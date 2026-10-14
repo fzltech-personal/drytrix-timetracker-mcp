@@ -14,7 +14,7 @@ from .client import TimeTrackerError
 
 # Shown when the token's user cannot be resolved (missing read:users scope).
 UNRESOLVED_USER_NOTE = (
-    "the token's user could not be resolved (missing read:users scope); "
+    "the token's user could not be resolved (grant read:* or read:users); "
     "if this token is an admin token, results may span multiple users"
 )
 
@@ -30,14 +30,23 @@ def whoami(client: Any) -> dict:
 
 
 def current_user_id(client: Any) -> int | None:
-    """Resolve the token's user id, or ``None`` when the scope is missing."""
+    """Resolve the token's user id, or ``None`` when the scope is missing.
+
+    ``GET /users/me`` nests the user under a ``user`` key on some versions
+    (seen on v5.13.4), so both envelope and flat shapes are accepted.
+    """
     try:
-        me = client.get("users/me") or {}
+        payload = client.get("users/me") or {}
     except TimeTrackerError as exc:
         if exc.status in (401, 403):
             return None
         raise
-    return me.get("id")
+    if not isinstance(payload, dict):
+        return None
+    user = payload.get("user")
+    if not isinstance(user, dict):
+        user = payload
+    return user.get("id")
 
 
 def instance_timezone(client: Any) -> str:

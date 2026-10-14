@@ -25,3 +25,16 @@ def test_summary_fixture_shape():
 def test_users_me_forbidden_fixture_shape():
     data = json.loads((FIX / "users_me_forbidden.json").read_text())
     assert data["status"] == 403 and data["required_scope"] == "read:users"
+
+
+def test_users_me_fixture_envelope_and_scoping():
+    from drytrix_timetracker_mcp import tools
+
+    data = json.loads((FIX / "users_me.json").read_text())
+    assert isinstance(data["user"], dict) and "id" in data["user"]
+
+    class FakeClient:
+        def get(self, path, params=None):
+            return data
+
+    assert tools.current_user_id(FakeClient()) == data["user"]["id"]
