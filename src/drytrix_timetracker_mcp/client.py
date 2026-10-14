@@ -36,11 +36,18 @@ class TimeTrackerError(Exception):
         self.retry_after = retry_after
 
     def __str__(self) -> str:
-        parts = [f"HTTP {self.status}: {self.message}"]
+        base = f"HTTP {self.status}"
+        if self.message and self.message != base:
+            base = f"{base}: {self.message}"
+        parts = [base]
         if self.error_code:
             parts.append(f"({self.error_code})")
         if self.required_scope:
             parts.append(f"requires scope '{self.required_scope}'")
+        if self.available_scopes:
+            parts.append("available scopes: " + ", ".join(self.available_scopes))
+        if self.status == 401:
+            parts.append("check the API token (TIMETRACKER_API_KEY) and base URL")
         return " ".join(parts)
 
 

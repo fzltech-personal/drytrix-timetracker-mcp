@@ -96,3 +96,22 @@ def test_paginate_walks_pages():
     )
     ids = [e["id"] for e in make_client().paginate("time-entries", key="time_entries")]
     assert ids == [1, 2]
+
+
+def test_error_str_includes_available_scopes():
+    e = c.TimeTrackerError(
+        403,
+        "requires read:users",
+        error_code="forbidden",
+        required_scope="read:users",
+        available_scopes=["read:projects", "read:time_entries"],
+    )
+    s = str(e)
+    assert "read:users" in s and "read:projects" in s
+
+
+def test_error_str_401_hint_and_no_duplication():
+    e = c.TimeTrackerError(401, "HTTP 401")
+    s = str(e)
+    assert "token" in s.lower()
+    assert "HTTP 401: HTTP 401" not in s

@@ -12,6 +12,12 @@ from typing import Any
 from . import aggregate
 from .client import TimeTrackerError
 
+# Shown when the token's user cannot be resolved (missing read:users scope).
+UNRESOLVED_USER_NOTE = (
+    "the token's user could not be resolved (missing read:users scope); "
+    "if this token is an admin token, results may span multiple users"
+)
+
 
 def api_info(client: Any) -> dict:
     """API version, timezone, and enabled modules (no auth required)."""
@@ -67,6 +73,7 @@ def list_time_entries(
     project_id: int | None = None,
     billable: bool | None = None,
     user_id: int | None = None,
+    include_active: bool | None = None,
 ) -> dict:
     start, end = aggregate.normalize_range(start_date, end_date)
     params: dict[str, Any] = {}
@@ -80,6 +87,8 @@ def list_time_entries(
         params["billable"] = billable
     if user_id is not None:
         params["user_id"] = user_id
+    if include_active is not None:
+        params["include_active"] = include_active
     entries = list(client.paginate("time-entries", params, key="time_entries"))
     return {"time_entries": entries}
 
@@ -109,8 +118,11 @@ def get_hours_summary(
     user_id: int | None = None,
 ) -> dict:
     """Total/billable hours and per-project breakdown (requires ``read:reports``)."""
-    params, _ = _aggregate_params(client, start_date, end_date, project_id, user_id)
-    return client.get("reports/summary", params)
+    params, resolved = _aggregate_params(client, start_date, end_date, project_id, user_id)
+    result = client.get("reports/summary", params)
+    if resolved is None and isinstance(result, dict):
+        result["note"] = UNRESOLVED_USER_NOTE
+    return result
 
 
 def hours_by_day(
@@ -127,10 +139,7 @@ def hours_by_day(
     timezone = tz or instance_timezone(client)
     result = aggregate.group_hours_by_day(entries, tz=timezone)
     if resolved is None:
-        result["note"] = (
-            "the token's user could not be resolved (missing read:users scope); "
-            "results may span multiple users"
-        )
+        result["note"] = UNRESOLVED_USER_NOTE
     return result
 
 

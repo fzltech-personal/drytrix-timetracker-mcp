@@ -86,3 +86,16 @@ def test_unknown_endpoint_message():
 
     with pytest.raises(TimeTrackerError):
         tools.api_info(Missing())
+
+
+def test_get_hours_summary_notes_when_user_unresolved():
+    class Denied(FakeClient):
+        def get(self, path, params=None):
+            if path == "users/me":
+                raise TimeTrackerError(403, "requires read:users")
+            return super().get(path, params)
+
+    fc = Denied({"reports/summary": {"summary": {"total_hours": 76.0}}})
+    out = tools.get_hours_summary(fc, "2026-09-01", "2026-09-30")
+    assert "note" in out
+    assert out["summary"]["total_hours"] == 76.0
