@@ -23,6 +23,22 @@ READ_TOOL_NAMES = {
     "timer_status",
 }
 
+WRITE_TOOL_NAMES = {
+    "start_timer",
+    "stop_timer",
+    "pause_timer",
+    "resume_timer",
+    "create_time_entry",
+}
+
+
+def registered_tool_names(enable_write: bool) -> set[str]:
+    """The tool names the server registers for a given write setting."""
+    names = set(READ_TOOL_NAMES)
+    if enable_write:
+        names |= WRITE_TOOL_NAMES
+    return names
+
 
 def build_server(settings: Settings, client: TimeTrackerClient | None = None) -> MCPServer:
     """Create the MCP server with the read tools registered."""
@@ -95,6 +111,54 @@ def build_server(settings: Settings, client: TimeTrackerClient | None = None) ->
     def timer_status() -> dict:
         """Get the active timer for the token's user (needs read:time_entries)."""
         return tools.timer_status(client)
+
+    if settings.enable_write:
+
+        @mcp.tool()
+        def start_timer(
+            project_id: int | None = None,
+            client_id: int | None = None,
+            task_id: int | None = None,
+        ) -> dict:
+            """Start a timer (needs write:time_entries)."""
+            return tools.start_timer(
+                client, project_id=project_id, client_id=client_id, task_id=task_id
+            )
+
+        @mcp.tool()
+        def stop_timer() -> dict:
+            """Stop the active timer (needs write:time_entries)."""
+            return tools.stop_timer(client)
+
+        @mcp.tool()
+        def pause_timer() -> dict:
+            """Pause the active timer (needs write:time_entries)."""
+            return tools.pause_timer(client)
+
+        @mcp.tool()
+        def resume_timer() -> dict:
+            """Resume a paused timer (needs write:time_entries)."""
+            return tools.resume_timer(client)
+
+        @mcp.tool()
+        def create_time_entry(
+            project_id: int,
+            start_time: str,
+            end_time: str | None = None,
+            notes: str | None = None,
+            tags: str | None = None,
+            billable: bool = True,
+        ) -> dict:
+            """Create a time entry (needs write:time_entries)."""
+            return tools.create_time_entry(
+                client,
+                project_id=project_id,
+                start_time=start_time,
+                end_time=end_time,
+                notes=notes,
+                tags=tags,
+                billable=billable,
+            )
 
     return mcp
 

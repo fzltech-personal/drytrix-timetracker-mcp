@@ -6,6 +6,7 @@ real ``TimeTrackerClient`` or a stub in tests.
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from . import aggregate
@@ -165,3 +166,66 @@ def search(
 def timer_status(client: Any) -> dict:
     """The active timer for the token's user (requires ``read:time_entries``)."""
     return client.get("timer/status")
+
+
+# --- Write tools (only registered when TT_ENABLE_WRITE is set) -------------
+
+
+def start_timer(
+    client: Any,
+    project_id: int | None = None,
+    client_id: int | None = None,
+    task_id: int | None = None,
+) -> dict:
+    """Start a timer (requires ``write:time_entries``)."""
+    payload: dict[str, Any] = {}
+    if project_id is not None:
+        payload["project_id"] = project_id
+    if client_id is not None:
+        payload["client_id"] = client_id
+    if task_id is not None:
+        payload["task_id"] = task_id
+    return client.post("timer/start", json=payload)
+
+
+def stop_timer(client: Any) -> dict:
+    """Stop the active timer (requires ``write:time_entries``)."""
+    return client.post("timer/stop", json={})
+
+
+def pause_timer(client: Any) -> dict:
+    """Pause the active timer (requires ``write:time_entries``)."""
+    return client.post("timer/pause", json={})
+
+
+def resume_timer(client: Any) -> dict:
+    """Resume a paused timer (requires ``write:time_entries``)."""
+    return client.post("timer/resume", json={})
+
+
+def create_time_entry(
+    client: Any,
+    project_id: int,
+    start_time: str,
+    end_time: str | None = None,
+    notes: str | None = None,
+    tags: str | None = None,
+    billable: bool = True,
+) -> dict:
+    """Create a time entry (requires ``write:time_entries``).
+
+    Sends an ``Idempotency-Key`` so retries do not create duplicates.
+    """
+    payload: dict[str, Any] = {
+        "project_id": project_id,
+        "start_time": start_time,
+        "billable": billable,
+    }
+    if end_time is not None:
+        payload["end_time"] = end_time
+    if notes is not None:
+        payload["notes"] = notes
+    if tags is not None:
+        payload["tags"] = tags
+    headers = {"Idempotency-Key": str(uuid.uuid4())}
+    return client.post("time-entries", json=payload, headers=headers)
