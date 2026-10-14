@@ -1,0 +1,12 @@
+{
+  "available_scopes": [
+    "read:projects",
+    "read:time_entries",
+    "read:tasks",
+    "read:clients",
+    "read:reports"
+  ],
+  "error_code": "forbidden",
+  "required_scope": "read:users",
+  "status": 403
+}

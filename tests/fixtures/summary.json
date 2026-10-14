@@ -1,0 +1,17 @@
+{
+  "summary": {
+    "billable_hours": 76.0,
+    "by_project": [
+      {
+        "entries": 3,
+        "hours": 16.0,
+        "project_id": 1,
+        "project_name": "Acme Project"
+      }
+    ],
+    "end_date": "2026-09-30T23:59:59",
+    "start_date": "2026-09-01T00:00:00",
+    "total_entries": 11,
+    "total_hours": 76.0
+  }
+}
